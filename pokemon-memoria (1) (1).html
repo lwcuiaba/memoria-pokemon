@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Jogo da Memória Pokémon</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 10px;
+    }
+    h1 { margin: 20px 0; }
+    .tabuleiro {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-width: 400px;
+      margin: 0 auto 20px auto;
+    }
+    .carta {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      perspective: 600px;
+      cursor: pointer;
+    }
+    .face {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+      position: absolute;
+      backface-visibility: hidden;
+      transition: transform 0.4s;
+    }
+    .frente { background: white; transform: rotateY(180deg); }
+    .costas {
+      background: #ffcb05;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .carta.virada .frente { transform: rotateY(0); }
+    .carta.virada .costas { transform: rotateY(180deg); }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    img { width: 100%; height: 100%; object-fit: contain; }
+  </style>
+</head>
+<body>
+
+<h1>Jogo da Memória Pokémon</h1>
+<div class="tabuleiro" id="tabuleiro"></div>
+<button onclick="iniciarJogo()">Reiniciar</button>
+
+<script>
+  const personagens = [
+    { key: "agatha", img: "https://raw.githubusercontent.com/lwcuiaba/jogo2/main/AGATHA.png" },
+    { key: "meowth", img: "https://img.pokemondb.net/artwork/large/meowth.jpg" },
+    { key: "pikachu", img: "https://img.pokemondb.net/artwork/large/pikachu.jpg" },
+    { key: "bulbassauro", img: "https://img.pokemondb.net/artwork/large/bulbasaur.jpg" },
+    { key: "charmander", img: "https://img.pokemondb.net/artwork/large/charmander.jpg" },
+    { key: "squirtle", img: "https://img.pokemondb.net/artwork/large/squirtle.jpg" },
+    { key: "ekans", img: "https://img.pokemondb.net/artwork/large/ekans.jpg" },
+    { key: "koffing", img: "https://img.pokemondb.net/artwork/large/koffing.jpg" },
+    { key: "pidgeot", img: "https://img.pokemondb.net/artwork/large/pidgeot.jpg" },
+    { key: "butterfree", img: "https://img.pokemondb.net/artwork/large/butterfree.jpg" }
+  ];
+
+  const nomesPT = {
+    agatha: 'Ágata',
+    meowth: 'miau',
+    pikachu: 'Pikachu',
+    bulbassauro: 'Bulbassauro',
+    charmander: 'Charmander',
+    squirtle: 'Scuartou',
+    ekans: 'Écans',
+    koffing: 'Coffing',
+    pidgeot: 'Pidioto',
+    butterfree: 'Baterfree'
+  };
+
+  function falarNome(key) {
+    const texto = nomesPT[key] || key;
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'pt-BR';
+    speechSynthesis.speak(u);
+  }
+
+  let primeiraCarta = null;
+  let bloqueado = false;
+
+  function criarCarta(personagem) {
+    const carta = document.createElement('div');
+    carta.classList.add('carta');
+    carta.dataset.key = personagem.key;
+
+    const frente = document.createElement('div');
+    frente.classList.add('face', 'frente');
+    const img = document.createElement('img');
+    img.src = personagem.img;
+    img.alt = personagem.key;
+    frente.appendChild(img);
+
+    const costas = document.createElement('div');
+    costas.classList.add('face', 'costas');
+    costas.textContent = '?';
+
+    carta.appendChild(frente);
+    carta.appendChild(costas);
+
+    carta.addEventListener('click', () => {
+      falarNome(personagem.key);
+      virarCarta(carta);
+    });
+
+    return carta;
+  }
+
+  function embaralhar(array) {
+    return array.sort(() => Math.random() - 0.5);
+  }
+
+  function iniciarJogo() {
+    const tabuleiro = document.getElementById('tabuleiro');
+    tabuleiro.innerHTML = '';
+    const pares = [...personagens, ...personagens];
+    embaralhar(pares).forEach(p => {
+      tabuleiro.appendChild(criarCarta(p));
+    });
+    primeiraCarta = null;
+    bloqueado = false;
+  }
+
+  function virarCarta(carta) {
+    if (bloqueado || carta.classList.contains('virada')) return;
+    carta.classList.add('virada');
+
+    if (!primeiraCarta) {
+      primeiraCarta = carta;
+    } else {
+      if (carta.dataset.key === primeiraCarta.dataset.key) {
+        primeiraCarta = null;
+      } else {
+        bloqueado = true;
+        setTimeout(() => {
+          carta.classList.remove('virada');
+          primeiraCarta.classList.remove('virada');
+          primeiraCarta = null;
+          bloqueado = false;
+        }, 1000);
+      }
+    }
+  }
+
+  iniciarJogo();
+</script>
+
+</body>
+</html>
